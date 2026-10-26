@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smart-file-organizer"
-version = "1.0.0"
+version = "1"  # the app calls this version V1
 description = "Tidy a messy folder (like Downloads) by type and date, with dry-run preview, undo, duplicate detection and YAML rules."
 readme = "README.md"
 requires-python = ">=3.9"

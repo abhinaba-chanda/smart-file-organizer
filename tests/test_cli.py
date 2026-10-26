@@ -84,3 +84,18 @@ def test_guided_mode_quit_changes_nothing(messy: Path, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda *a, **k: "quit")
     assert guided(Console(record=True, width=120, force_terminal=False)) == 0
     assert sorted(p.name for p in messy.iterdir()) == before
+
+
+def test_version_is_V1(monkeypatch):
+    from smart_organizer import __version__
+    from smart_organizer.cli import guided
+
+    assert __version__ == "V1"
+    r = subprocess.run([sys.executable, "-m", "smart_organizer", "--version"],
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip().endswith(" V1")
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "quit")
+    console = Console(record=True, width=120, force_terminal=False)
+    guided(console)
+    assert "Smart File Organizer V1" in console.export_text()

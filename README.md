@@ -25,7 +25,7 @@
 
 ## 🪟 Download for Windows
 
-No Python needed: grab the ready-made **[SmartFileOrganizer.exe from the latest release](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens in guided mode: pick *organize*, drag your folder into the window (or press Enter for Downloads), check the preview, then confirm. You can also run it from cmd or PowerShell with the same arguments as `organize`, e.g. `SmartFileOrganizer.exe preview "C:\Users\you\Downloads"`.
+No Python needed: grab the ready-made **[SmartFileOrganizer.exe from release V1](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens in guided mode: pick *organize*, drag your folder into the window (or press Enter for Downloads), check the preview, then confirm. You can also run it from cmd or PowerShell with the same arguments as `organize`, e.g. `SmartFileOrganizer.exe preview "C:\Users\you\Downloads"`.
 
 The exe is built from this source by GitHub Actions ([release workflow](.github/workflows/release.yml)) and is not code-signed, so Windows SmartScreen may warn you: click **More info → Run anyway**. Each release lists the exe's SHA-256 checksum.
 

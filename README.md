@@ -10,7 +10,7 @@
 
 **Turn a messy Downloads folder into a tidy one in one click (Windows app) or one command: sort by type and/or date, preview first, undo any time, and catch duplicate files.**
 
-![organize preview](docs/preview.png)
+<p align="center"><img src="docs/app-dark.png" alt="Smart File Organizer app window on Windows 11 (dark mode) with the preview list"></p>
 
 ## ✨ Features
 
@@ -24,13 +24,13 @@
 - **Colourful terminal UI** made with [rich](https://github.com/Textualize/rich): tables, a tree view and a progress bar.
 - **Cross-platform** – uses `pathlib` throughout, stores portable paths in the undo log, and the CI runs on **Windows, macOS and Linux** with Python 3.9 and 3.12.
 
-![run, undo and duplicates](docs/run-and-undo.png)
-
 ## 🪟 Download for Windows
 
 No Python needed: grab **[SmartFileOrganizer.exe from release V1](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens a small, clean app window (no cmd window):
 
-![Smart File Organizer app on Windows 11](docs/app-windows.jpg)
+| After Organize | Find duplicates | Light mode |
+|---|---|---|
+| <img src="docs/app-done.png" alt="Done toast with Open folder after organizing" width="280"> | <img src="docs/app-dupes.png" alt="Find duplicates view" width="280"> | <img src="docs/app-light.png" alt="Light mode" width="280"> |
 
 1. **Choose a folder** (it starts on your Downloads folder, or the folder you used last time; *Browse…* picks another, or drop a folder onto the exe's icon).
 2. **Pick how to group**: *By type*, *By date* or *Type + date*. Tick **Subfolders** to include files inside subfolders too.
@@ -141,7 +141,7 @@ smart-file-organizer/
 │   └── default_config.yaml    # built-in rules
 ├── examples/make_messy_folder.py
 ├── tests/                     # pytest (planner, executor/undo, duplicates, config, CLI)
-├── docs/                      # terminal screenshots
+├── docs/                      # logo and app screenshots
 ├── pyproject.toml             # `pip install .` -> `organize`
 └── .github/workflows/ci.yml   # tests on Windows, macOS, Linux
 ```
@@ -153,7 +153,7 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
-The screenshots above are real runs on the demo folder, exported with rich's SVG export and converted to PNG.
+The screenshots above are the real app window on the demo folder, captured on Windows 11 by the release workflow.
 
 ## 📄 License
 

@@ -192,13 +192,23 @@ def _display_available() -> bool:
         return False
 
 
+def _new_root():
+    """A Tk root, or skip: some CI Pythons (Windows 3.9) can't find init.tcl on a second Tk()."""
+    import tkinter
+
+    try:
+        return tkinter.Tk()
+    except tkinter.TclError as exc:
+        pytest.skip(f"Tk not usable here: {exc}")
+
+
 @pytest.mark.skipif(not _display_available(), reason="no display (headless)")
 def test_window_builds_and_previews(messy: Path):
     import tkinter
 
     from smart_organizer.gui import App
 
-    root = tkinter.Tk()
+    root = _new_root()
     root.withdraw()
     try:
         app = App(root, folder=messy, auto_preview=False)
@@ -226,7 +236,7 @@ def test_title_row_byline_and_github_button(messy: Path, monkeypatch):
 
     opened = []
     monkeypatch.setattr(gui.webbrowser, "open", opened.append)
-    root = tkinter.Tk()
+    root = _new_root()
     root.withdraw()
     try:
         app = App(root, folder=messy, auto_preview=False)
@@ -246,7 +256,7 @@ def test_duplicates_view_moves_extras(messy: Path):
 
     from smart_organizer.gui import App
 
-    root = tkinter.Tk()
+    root = _new_root()
     root.withdraw()
     try:
         app = App(root, folder=messy, auto_preview=False)
@@ -287,7 +297,7 @@ def test_window_has_app_icon(messy: Path):
 
     from smart_organizer.gui import App
 
-    root = tk.Tk()
+    root = _new_root()
     try:
         root.withdraw()
         app = App(root, folder=messy, auto_preview=False)

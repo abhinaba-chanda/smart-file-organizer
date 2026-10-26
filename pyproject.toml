@@ -16,15 +16,20 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
     "Topic :: Utilities",
 ]
 dependencies = ["rich>=13.0", "PyYAML>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
+gui = ["sv-ttk>=2.6"]  # Windows 11 look for the window (optional; plain ttk without it)
 
 [project.scripts]
 organize = "smart_organizer.cli:main"
+
+[project.gui-scripts]
+organize-gui = "smart_organizer.gui:main"
 
 [project.urls]
 Homepage = "https://github.com/abhinaba-chanda/smart-file-organizer"

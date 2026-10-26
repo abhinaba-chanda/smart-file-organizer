@@ -31,4 +31,7 @@ def test_version_file_names_publisher_without_links():
 
 def test_release_build_uses_version_file():
     wf = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
-    assert "--version-file packaging/version_info.txt" in wf
+    spec = (ROOT / "packaging" / "SmartFileOrganizer.spec").read_text(encoding="utf-8")
+    assert "packaging/SmartFileOrganizer.spec" in wf
+    assert '"version_info.txt"' in spec and '"icon.ico"' in spec
+    assert "console=False" in spec  # windowed: no cmd window

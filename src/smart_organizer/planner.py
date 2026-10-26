@@ -116,3 +116,12 @@ def summarize(moves: list[Move]) -> dict[str, tuple[int, int]]:
         c[0] += 1
         c[1] += m.size
     return {k: (v[0], v[1]) for k, v in sorted(out.items(), key=lambda kv: (-kv[1][0], kv[0]))}
+
+
+def human_size(n: float) -> str:
+    """1536 -> '1.5 KB'."""
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024 or unit == "GB":
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"

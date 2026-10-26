@@ -11,7 +11,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
-from .planner import Move, summarize
+from .planner import Move, human_size, summarize  # noqa: F401  (human_size re-exported)
 
 ICONS = {
     "Images": "🖼️ ", "Screenshots": "📸", "Videos": "🎬", "Music": "🎵", "Documents": "📄",
@@ -24,15 +24,6 @@ COLORS = {
     "Installers": "bright_red", "Code": "bright_blue", "Fonts": "white", "Big files": "bright_white",
     "Duplicate": "bright_black", "Other": "grey62",
 }
-
-
-def human_size(n: float) -> str:
-    """1536 -> '1.5 KB'."""
-    for unit in ("B", "KB", "MB", "GB"):
-        if n < 1024 or unit == "GB":
-            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
-        n /= 1024
-    return f"{n:.1f} TB"
 
 
 def style_for(category: str) -> str:

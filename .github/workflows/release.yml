@@ -31,37 +31,100 @@ jobs:
       - name: Install dependencies and PyInstaller
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ".[dev]" pyinstaller
+          python -m pip install ".[dev,gui]" pyinstaller
 
       - name: Run tests
         run: python -m pytest -q
 
-      - name: Build SmartFileOrganizer.exe
-        run: >
-          pyinstaller --noconfirm --clean --onefile --console
-          --name SmartFileOrganizer
-          --icon packaging/icon.ico
-          --version-file packaging/version_info.txt
-          --paths src
-          --collect-data smart_organizer
-          --collect-submodules rich
-          packaging/launcher.py
-
-      - name: Smoke test the exe
+      - name: Get UPX (packs the bundled DLLs)
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $exe = Resolve-Path dist\SmartFileOrganizer.exe
-          & $exe --version; if ($LASTEXITCODE -ne 0) { throw "--version failed" }
-          & $exe --help;    if ($LASTEXITCODE -ne 0) { throw "--help failed" }
-          $demo = Join-Path $env:RUNNER_TEMP "demo-downloads"
+          $v = "4.2.4"
+          Invoke-WebRequest "https://github.com/upx/upx/releases/download/v$v/upx-$v-win64.zip" -OutFile upx.zip
+          Expand-Archive upx.zip -DestinationPath $env:RUNNER_TEMP -Force
+          "UPX_DIR=$env:RUNNER_TEMP\upx-$v-win64" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Build SmartFileOrganizer.exe (windowed, no console)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          pyinstaller --noconfirm --clean --distpath dist-plain packaging/SmartFileOrganizer.spec
+          if ($LASTEXITCODE -ne 0) { throw "plain build failed" }
+          pyinstaller --noconfirm --clean --distpath dist-upx --upx-dir "$env:UPX_DIR" packaging/SmartFileOrganizer.spec
+          if ($LASTEXITCODE -ne 0) { throw "UPX build failed" }
+          $plain = (Get-Item dist-plain\SmartFileOrganizer.exe).Length
+          $upx = (Get-Item dist-upx\SmartFileOrganizer.exe).Length
+          Write-Host ("SIZE plain={0} bytes ({1:N2} MB) | upx={2} bytes ({3:N2} MB)" -f $plain, ($plain/1MB), $upx, ($upx/1MB))
+          "| build | bytes | MB |`n|---|---|---|`n| windowed, no UPX | $plain | $([math]::Round($plain/1MB,2)) |`n| windowed + UPX | $upx | $([math]::Round($upx/1MB,2)) |" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Smoke test the exe (self-test, window opens, no console, file info)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          function Test-Exe($exe) {
+            # 1) GUI subsystem (2) = no console window
+            $b = [IO.File]::ReadAllBytes($exe); $pe = [BitConverter]::ToInt32($b, 0x3C)
+            $sub = [BitConverter]::ToUInt16($b, $pe + 0x5C)
+            Write-Host "PE subsystem: $sub (2 = Windows GUI, 3 = console)"
+            if ($sub -ne 2) { return $false }
+            # 2) self-test: plan, organize, find duplicates, undo, build the window
+            $out = Join-Path $env:RUNNER_TEMP "selftest.txt"; Remove-Item $out -ErrorAction SilentlyContinue
+            $p = Start-Process $exe -ArgumentList "--self-test", "`"$out`"" -PassThru -Wait
+            if (Test-Path $out) { Get-Content $out | Write-Host }
+            if ($p.ExitCode -ne 0 -or -not (Select-String -Path $out -Pattern "window ok" -Quiet)) { return $false }
+            return $true
+          }
+          $chosen = $null
+          foreach ($exe in @("dist-upx\SmartFileOrganizer.exe", "dist-plain\SmartFileOrganizer.exe")) {
+            Write-Host "== testing $exe"
+            if (Test-Exe (Resolve-Path $exe).Path) { $chosen = $exe; break }
+            Write-Host "!! $exe failed the self-test"
+          }
+          if (-not $chosen) { throw "no build passed the self-test" }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item $chosen dist\SmartFileOrganizer.exe
+          Write-Host "Shipping $chosen ($((Get-Item dist\SmartFileOrganizer.exe).Length) bytes)"
+          # 3) real launch on a demo folder: the window must open and stay alive
+          $demo = Join-Path $env:RUNNER_TEMP "Downloads"
           python examples/make_messy_folder.py $demo
-          & $exe preview $demo; if ($LASTEXITCODE -ne 0) { throw "preview failed" }
-          if (-not (Test-Path (Join-Path $demo "song.mp3"))) { throw "preview moved files" }
-          & $exe run $demo --yes; if ($LASTEXITCODE -ne 0) { throw "run failed" }
-          if (Test-Path (Join-Path $demo "song.mp3")) { throw "run did not move song.mp3" }
-          & $exe undo $demo; if ($LASTEXITCODE -ne 0) { throw "undo failed" }
-          if (-not (Test-Path (Join-Path $demo "song.mp3"))) { throw "undo did not restore song.mp3" }
+          $exe = (Resolve-Path dist\SmartFileOrganizer.exe).Path
+          Start-Process $exe -ArgumentList "`"$demo`""
+          $win = $null
+          for ($i = 0; $i -lt 30 -and -not $win; $i++) {
+            Start-Sleep -Milliseconds 500
+            $win = Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+          }
+          if (-not $win) { throw "no window appeared" }
+          Start-Sleep -Seconds 3
+          $win.Refresh()
+          Write-Host "Window title: '$($win.MainWindowTitle)', alive: $(-not $win.HasExited)"
+          if ($win.HasExited -or $win.MainWindowTitle -ne "Smart File Organizer") { throw "window not alive or wrong title" }
+          # 4) screenshot of the window for the README
+          try {
+            Add-Type -AssemblyName System.Drawing
+            Add-Type @"
+          using System; using System.Runtime.InteropServices;
+          public struct RECT { public int Left, Top, Right, Bottom; }
+          public static class W {
+            [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+            [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int a, out RECT r, int s);
+          }
+          "@
+            [W]::SetForegroundWindow($win.MainWindowHandle) | Out-Null
+            Start-Sleep -Milliseconds 800
+            $r = New-Object RECT
+            [W]::DwmGetWindowAttribute($win.MainWindowHandle, 9, [ref]$r, 16) | Out-Null
+            $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
+            $bmp = New-Object Drawing.Bitmap $w, $h
+            $g = [Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
+            New-Item -ItemType Directory -Force shots | Out-Null
+            $bmp.Save("shots\gui-windows.png", [Drawing.Imaging.ImageFormat]::Png)
+            Write-Host "Screenshot $w x $h saved"
+          } catch { Write-Host "Screenshot skipped: $_" }
+          Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Stop-Process -Force
+          # 5) file info (Right-click > Properties > Details)
           $vi = (Get-Item $exe).VersionInfo
           Write-Host ("Details: CompanyName={0} | ProductVersion={1} | Copyright={2}" -f $vi.CompanyName, $vi.ProductVersion, $vi.LegalCopyright)
           if ($vi.CompanyName -ne "Abhinaba-Dev") { throw "CompanyName missing from file info" }
@@ -70,6 +133,14 @@ jobs:
           $allInfo = ($vi | Format-List * | Out-String)
           if ($allInfo -match "github\.com") { throw "github.com found in file info" }
           Write-Host "Smoke test passed"
+
+      - name: Upload screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-screenshot
+          path: shots/
+          if-no-files-found: ignore
 
       - name: Package zip, checksums and release notes
         shell: pwsh
@@ -84,7 +155,7 @@ jobs:
           }
           $lines | Set-Content -Encoding ascii out\SHA256SUMS.txt
           $exeHash = (Get-FileHash out\SmartFileOrganizer.exe -Algorithm SHA256).Hash.ToLower()
-          $exeSize = "{0:N1} MB" -f ((Get-Item out\SmartFileOrganizer.exe).Length / 1MB)
+          $exeSize = "{0:N2} MB" -f ((Get-Item out\SmartFileOrganizer.exe).Length / 1MB)
           $notes = Get-Content -Raw packaging\RELEASE_NOTES.md
           $notes = $notes.Replace("{{TAG}}", $env:TAG).Replace("{{SHA256}}", $exeHash).Replace("{{SIZE}}", $exeSize).Replace("{{RUN_URL}}", "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID")
           $notes | Set-Content -Encoding utf8 out\notes.md

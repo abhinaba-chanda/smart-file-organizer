@@ -12,13 +12,11 @@ from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 from rich.prompt import Confirm, Prompt
 
 from . import __version__
-from .config import MODES, ConfigError, default_config_text, load_config
+from .config import CONFIG_NAME, MODES, ConfigError, default_config_text, find_config, load_config
 from .duplicates import find_duplicates
 from .executor import apply_plan, list_logs, undo
 from .planner import build_plan, iter_files
 from .ui import destination_tree, duplicates_table, header, human_size, plan_table, summary_table
-
-CONFIG_NAME = "organizer.yaml"
 
 
 def _console() -> Console:
@@ -27,10 +25,7 @@ def _console() -> Console:
 
 def _find_config(folder: Path, explicit: Optional[str]) -> Optional[Path]:
     """--config wins; otherwise use organizer.yaml in the folder if present."""
-    if explicit:
-        return Path(explicit).expanduser()
-    local = folder / CONFIG_NAME
-    return local if local.is_file() else None
+    return find_config(folder, explicit)
 
 
 def _folder(value: str) -> Path:

@@ -12,6 +12,7 @@ from typing import Any, Optional
 import yaml
 
 MODES = ("type", "date", "type-date")
+CONFIG_NAME = "organizer.yaml"
 DUPLICATE_ACTIONS = ("keep", "move")
 _SIZE_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([KMGT]?B?)\s*$", re.IGNORECASE)
 _UNITS = {"": 1, "B": 1, "K": 1024, "KB": 1024, "M": 1024**2, "MB": 1024**2,
@@ -148,3 +149,11 @@ def load_config(path: Optional[Path] = None) -> Config:
     except yaml.YAMLError as exc:
         raise ConfigError(f"Invalid YAML: {exc}") from exc
     return config_from_dict(data)
+
+
+def find_config(folder: Path, explicit: Optional[str] = None) -> Optional[Path]:
+    """An explicit file wins; otherwise use organizer.yaml in the folder if present (else built-in rules)."""
+    if explicit:
+        return Path(explicit).expanduser()
+    local = Path(folder) / CONFIG_NAME
+    return local if local.is_file() else None

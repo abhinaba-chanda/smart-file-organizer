@@ -6,7 +6,7 @@
 ![Platforms](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-tested-success)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Turn a messy Downloads folder into a tidy one with one command: sort by type and/or date, preview first, undo any time, and catch duplicate files.**
+**Turn a messy Downloads folder into a tidy one in one click (Windows app) or one command: sort by type and/or date, preview first, undo any time, and catch duplicate files.**
 
 ![organize preview](docs/preview.png)
 
@@ -18,6 +18,7 @@
 - **Rules from YAML** – match by extension, file-name pattern (`Screenshot*`) or size (`min_size: 1GB`); first matching rule wins.
 - **Three layouts** – `type` (`Images/…`), `date` (`2026/10/…`) or `type-date` (`Images/2026/10/…`).
 - **Safe by design** – never overwrites (name clashes become `photo (1).jpg`), skips hidden files and half-finished downloads (`*.crdownload`, `*.part`), and asks before moving.
+- **Simple desktop app** for Windows: pick a folder, preview, organize, undo. Light and dark mode, one small exe.
 - **Colourful terminal UI** made with [rich](https://github.com/Textualize/rich): tables, a tree view and a progress bar.
 - **Cross-platform** – uses `pathlib` throughout, stores portable paths in the undo log, and the CI runs on **Windows, macOS and Linux** with Python 3.9 and 3.12.
 
@@ -25,9 +26,19 @@
 
 ## 🪟 Download for Windows
 
-No Python needed: grab the ready-made **[SmartFileOrganizer.exe from release V1](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens in guided mode: pick *organize*, drag your folder into the window (or press Enter for Downloads), check the preview, then confirm. You can also run it from cmd or PowerShell with the same arguments as `organize`, e.g. `SmartFileOrganizer.exe preview "C:\Users\you\Downloads"`.
+No Python needed: grab **[SmartFileOrganizer.exe from release V1](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens a small, clean app window (no cmd window):
 
-The exe is built from this source by GitHub Actions ([release workflow](.github/workflows/release.yml)) and is not code-signed, so Windows SmartScreen may warn you: click **More info → Run anyway**. Each release lists the exe's SHA-256 checksum.
+![Smart File Organizer app on Windows 11](docs/app-windows.jpg)
+
+1. **Choose a folder** (it starts on your Downloads folder; *Browse…* picks another, or drop a folder onto the exe's icon).
+2. **Pick how to group**: *By type*, *By date* or *Type + date*.
+3. **Check the preview**: every file and the folder it will go to, with a count.
+4. **Organize**: a progress bar runs, then a "done" toast. Changed your mind? **Undo last run** puts everything back.
+5. **Find duplicates** lists extra copies of identical files and the space they waste.
+
+It follows the Windows light/dark setting. The exe is one small file built from this source by GitHub Actions ([release workflow](.github/workflows/release.yml), [spec](packaging/SmartFileOrganizer.spec)). It is not code-signed, so Windows SmartScreen may warn you: click **More info → Run anyway**. Each release lists the exe's SHA-256 checksum.
+
+The exe is the app window only. For the command line (`organize preview …`, `--recursive`, `--dest`, custom YAML rules) install the Python package below; `organize-gui` (or `python -m smart_organizer.gui`) opens the same window from source.
 
 ## 🚀 Quick start
 

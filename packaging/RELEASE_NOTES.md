@@ -1,20 +1,14 @@
 # Smart File Organizer {{TAG}} for Windows
 
-Tidy a messy folder (like Downloads) by file type and/or date. It shows a dry-run preview first, asks before moving anything, can undo the last run, finds duplicate files, and supports your own YAML rules.
+Tidy a messy folder (like Downloads) by file type and/or date, in a simple app window. It shows a preview first, moves nothing until you click Organize, can undo the last run, and finds duplicate files.
 
 ## Download and run
 
-1. Download **SmartFileOrganizer.exe** below (or the zip, which also has the README). No Python or installer needed.
-2. **Double-click it.** It opens in guided mode: pick *organize*, drag your folder into the window (or press Enter for your Downloads folder), check the preview, then confirm.
-3. Or run it from Command Prompt / PowerShell with arguments:
+1. Download **SmartFileOrganizer.exe** below ({{SIZE}}, or the zip, which also has the README). No Python or installer needed.
+2. **Double-click it.** A small window opens (no cmd window), starting on your Downloads folder.
+3. Pick how to group (by type, by date, or type + date), check the preview, then click **Organize**. **Undo last run** puts everything back; **Find duplicates** lists extra copies.
 
-```
-SmartFileOrganizer.exe preview "C:\Users\you\Downloads"
-SmartFileOrganizer.exe run "C:\Users\you\Downloads" --mode type-date
-SmartFileOrganizer.exe undo "C:\Users\you\Downloads"
-SmartFileOrganizer.exe dupes "C:\Users\you\Downloads"
-SmartFileOrganizer.exe --help
-```
+It follows your Windows light/dark setting.
 
 ## Windows SmartScreen
 
@@ -30,6 +24,6 @@ SmartFileOrganizer.exe ({{SIZE}}), SHA-256:
 
 All files are listed in `SHA256SUMS.txt`. To check on Windows: `certutil -hashfile SmartFileOrganizer.exe SHA256`
 
-## Source code
+## Source code and command line
 
-The source for this exact version is attached below as **Source code (zip)** and **Source code (tar.gz)**. With Python 3.9+ you can also `pip install .` and use the `organize` command.
+The source for this exact version is attached below as **Source code (zip)** and **Source code (tar.gz)**. With Python 3.9+ you can `pip install .` and use the `organize` command (`organize preview "C:\Users\you\Downloads"`, `organize run …`, `organize undo …`, `organize dupes …`) or `organize-gui` for the window.

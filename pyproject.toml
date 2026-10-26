@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-file-organizer"
+version = "1.0.0"
+description = "Tidy a messy folder (like Downloads) by type and date, with dry-run preview, undo, duplicate detection and YAML rules."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Abhinaba Chanda" }]
+keywords = ["file-organizer", "cli", "downloads", "duplicates", "rich"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Utilities",
+]
+dependencies = ["rich>=13.0", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+organize = "smart_organizer.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/abhinaba-chanda/smart-file-organizer"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+smart_organizer = ["default_config.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

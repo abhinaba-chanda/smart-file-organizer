@@ -1,0 +1,69 @@
+# Smart File Organizer configuration.
+# Copy this file (run `organize init-config`) and edit it to make your own rules.
+
+# How files are grouped:
+#   type       -> Images/photo.jpg
+#   date       -> 2026/10/photo.jpg
+#   type-date  -> Images/2026/10/photo.jpg
+mode: type
+
+# Folder layout used by the "date" part. Placeholders: {year} {month} {day} {month_name}
+date_format: "{year}/{month:02d}"
+
+# Where files that match no rule go.
+other_folder: Other
+
+# Skip hidden files (names starting with a dot) and these glob patterns.
+skip_hidden: true
+ignore:
+  - "desktop.ini"
+  - "Thumbs.db"
+  - "*.part"
+  - "*.crdownload"
+  - "*.tmp"
+
+# What to do with exact duplicates (same content, found by SHA-256):
+#   keep  -> organize them like any other file (default)
+#   move  -> move the extra copies into the duplicates_folder
+duplicates: keep
+duplicates_folder: Duplicates
+
+# Rules are checked top to bottom; the first match wins.
+# A rule can match by extension, by glob pattern on the file name, and/or by size.
+rules:
+  - name: Screenshots
+    folder: Images/Screenshots
+    patterns: ["Screenshot*", "Screen Shot*", "Capture*"]
+  - name: Images
+    folder: Images
+    extensions: [jpg, jpeg, png, gif, bmp, webp, heic, svg, tiff, ico, raw]
+  - name: Videos
+    folder: Videos
+    extensions: [mp4, mkv, mov, avi, wmv, webm, flv, m4v]
+  - name: Music
+    folder: Music
+    extensions: [mp3, wav, flac, aac, ogg, m4a, wma]
+  - name: Documents
+    folder: Documents
+    extensions: [pdf, doc, docx, odt, rtf, txt, md, epub]
+  - name: Spreadsheets
+    folder: Documents/Spreadsheets
+    extensions: [xls, xlsx, ods, csv]
+  - name: Presentations
+    folder: Documents/Presentations
+    extensions: [ppt, pptx, odp, key]
+  - name: Archives
+    folder: Archives
+    extensions: [zip, rar, 7z, tar, gz, bz2, xz]
+  - name: Installers
+    folder: Installers
+    extensions: [exe, msi, dmg, pkg, deb, rpm, apk, appimage]
+  - name: Code
+    folder: Code
+    extensions: [py, js, ts, html, css, json, java, c, cpp, h, cs, go, rs, ipynb, sh, bat, ps1, sql, yaml, yml]
+  - name: Fonts
+    folder: Fonts
+    extensions: [ttf, otf, woff, woff2]
+  - name: Big files
+    folder: Big files
+    min_size: 1GB

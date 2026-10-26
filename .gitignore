@@ -7,3 +7,5 @@ dist/
 venv/
 .pytest_cache/
 demo-downloads/
+*.spec
+out/

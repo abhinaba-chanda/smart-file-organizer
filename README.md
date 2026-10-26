@@ -1,5 +1,6 @@
 # 🗂️ Smart File Organizer
 
+[![Download for Windows](https://img.shields.io/github/v/release/abhinaba-chanda/smart-file-organizer?label=Download%20for%20Windows&logo=windows&color=0078D4)](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)
 [![CI](https://github.com/abhinaba-chanda/smart-file-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/abhinaba-chanda/smart-file-organizer/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![Platforms](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-tested-success)
@@ -21,6 +22,12 @@
 - **Cross-platform** – uses `pathlib` throughout, stores portable paths in the undo log, and the CI runs on **Windows, macOS and Linux** with Python 3.9 and 3.12.
 
 ![run, undo and duplicates](docs/run-and-undo.png)
+
+## 🪟 Download for Windows
+
+No Python needed: grab the ready-made **[SmartFileOrganizer.exe from the latest release](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)** and double-click it. It opens in guided mode: pick *organize*, drag your folder into the window (or press Enter for Downloads), check the preview, then confirm. You can also run it from cmd or PowerShell with the same arguments as `organize`, e.g. `SmartFileOrganizer.exe preview "C:\Users\you\Downloads"`.
+
+The exe is built from this source by GitHub Actions ([release workflow](.github/workflows/release.yml)) and is not code-signed, so Windows SmartScreen may warn you: click **More info → Run anyway**. Each release lists the exe's SHA-256 checksum.
 
 ## 🚀 Quick start
 

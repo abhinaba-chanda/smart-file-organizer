@@ -62,3 +62,25 @@ def test_installed_command_runs(messy: Path):
                        capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     assert "song.mp3" in r.stdout
+
+
+def test_guided_mode_previews_then_organizes(messy: Path, monkeypatch):
+    from smart_organizer.cli import guided
+
+    answers = iter(["organize", f'"{messy}"', "type", "y"])
+    monkeypatch.setattr("builtins.input", lambda *a, **k: next(answers))
+    console = Console(record=True, width=120, force_terminal=False)
+    code = guided(console)
+    out = console.export_text()
+    assert code == 0
+    assert "DRY RUN" in out and "Moved" in out
+    assert (messy / "Music" / "song.mp3").exists()
+
+
+def test_guided_mode_quit_changes_nothing(messy: Path, monkeypatch):
+    from smart_organizer.cli import guided
+
+    before = sorted(p.name for p in messy.iterdir())
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "quit")
+    assert guided(Console(record=True, width=120, force_terminal=False)) == 0
+    assert sorted(p.name for p in messy.iterdir()) == before

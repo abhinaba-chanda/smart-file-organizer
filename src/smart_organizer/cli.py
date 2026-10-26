@@ -9,7 +9,7 @@ from typing import Optional
 
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
-from rich.prompt import Confirm
+from rich.prompt import Confirm, Prompt
 
 from . import __version__
 from .config import MODES, ConfigError, default_config_text, load_config
@@ -185,6 +185,53 @@ def cmd_init(args: argparse.Namespace, console: Console) -> int:
     return 0
 
 
+GUIDED_ACTIONS = {"organize": "tidy a folder (shows a preview first)", "undo": "put the last organize back",
+                  "dupes": "find duplicate files", "quit": "close"}
+
+
+def _clean_path(text: str) -> str:
+    """Strip the quotes Windows adds when a folder is dragged into the console."""
+    return text.strip().strip('"').strip("'").strip()
+
+
+def guided(console: Console, parser: Optional[argparse.ArgumentParser] = None) -> int:
+    """Interactive mode, used when the program is started with no arguments (e.g. a double-clicked .exe)."""
+    parser = parser or build_parser()
+    console.print(f"[bold cyan]Smart File Organizer {__version__}[/] [dim]guided mode[/]")
+    console.print("[dim]Tip: you can drag a folder into this window instead of typing its path. "
+                  "Run with --help to see the command-line options.[/]\n")
+    for name, text in GUIDED_ACTIONS.items():
+        console.print(f"  [bold]{name}[/]  {text}")
+    action = Prompt.ask("\nWhat do you want to do", choices=list(GUIDED_ACTIONS), default="organize",
+                        console=console)
+    if action == "quit":
+        return 0
+    default_folder = Path.home() / "Downloads"
+    while True:
+        raw = _clean_path(Prompt.ask("Folder", default=str(default_folder), console=console))
+        folder = Path(raw).expanduser()
+        if folder.is_dir():
+            break
+        console.print(f"[red]'{raw}' is not a folder, try again.[/]")
+    if action == "undo":
+        return COMMANDS["undo"](parser.parse_args(["undo", str(folder)]), console)
+    if action == "dupes":
+        return COMMANDS["dupes"](parser.parse_args(["dupes", str(folder)]), console)
+    mode = Prompt.ask("Group files by", choices=list(MODES), default="type", console=console)
+    code = cmd_preview(parser.parse_args(["preview", str(folder), "-m", mode]), console)
+    if code != 0:
+        return code
+    return cmd_run(parser.parse_args(["run", str(folder), "-m", mode]), console)
+
+
+def _pause_before_close(console: Console) -> None:
+    """Keep a double-clicked console window open long enough to read the result."""
+    try:
+        console.input("\n[dim]Press Enter to close…[/]")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
 COMMANDS = {"preview": cmd_preview, "run": cmd_run, "undo": cmd_undo, "dupes": cmd_dupes, "init-config": cmd_init}
 
 
@@ -198,6 +245,19 @@ def main(argv: Optional[list[str]] = None, console: Optional[Console] = None) ->
                 pass
     parser = build_parser()
     raw_argv = list(sys.argv[1:] if argv is None else argv)
+    if argv is None and not raw_argv and sys.stdin is not None and sys.stdin.isatty():
+        console = console or _console()
+        try:
+            code = guided(console, parser)
+        except ConfigError as exc:
+            console.print(f"[red]Config error:[/] {exc}")
+            code = 1
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Stopped.[/]")
+            code = 130
+        if getattr(sys, "frozen", False):
+            _pause_before_close(console)
+        return code
     args = parser.parse_args(raw_argv)
     folder_pos = [a for a in raw_argv[1:] if not a.startswith("-")]
     if hasattr(args, "folder") and folder_pos and Path(folder_pos[0]).expanduser().resolve() == args.folder:

@@ -256,3 +256,43 @@ def test_duplicates_view_moves_extras(messy: Path):
         assert str(app.organize_btn.cget("state")) == "normal"
     finally:
         root.destroy()
+
+
+def test_app_icon_is_bundled_and_has_all_sizes():
+    import struct
+    ico = Path(__file__).resolve().parents[1] / "packaging" / "icon.ico"
+    data = ico.read_bytes()
+    reserved, kind, count = struct.unpack("<HHH", data[:6])
+    assert (reserved, kind) == (0, 1)
+    sizes = {(data[6 + 16 * i] or 256) for i in range(count)}
+    assert {16, 32, 48, 256} <= sizes
+
+
+def test_embedded_window_icons_are_pngs():
+    import base64
+
+    pytest.importorskip("tkinter")
+    from smart_organizer import gui
+
+    for px, b64 in gui._APP_ICON.items():
+        raw = base64.b64decode(b64)
+        assert raw[:8] == b"\x89PNG\r\n\x1a\n"
+        w, h = int.from_bytes(raw[16:20], "big"), int.from_bytes(raw[20:24], "big")
+        assert (w, h) == (px, px)
+
+
+@pytest.mark.skipif(not _display_available(), reason="no display (headless)")
+def test_window_has_app_icon(messy: Path):
+    import tkinter as tk
+
+    from smart_organizer.gui import App
+
+    root = tk.Tk()
+    try:
+        root.withdraw()
+        app = App(root, folder=messy, auto_preview=False)
+        root.update()
+        assert app.logo_img is not None and app.logo_img.width() >= 24
+        assert len(app._window_icons) == 3
+    finally:
+        root.destroy()

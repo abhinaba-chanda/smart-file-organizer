@@ -1,4 +1,6 @@
-# 🗂️ Smart File Organizer
+<p align="center"><img src="docs/logo.png" width="112" height="112" alt="Smart File Organizer logo"></p>
+
+<h1 align="center">Smart File Organizer</h1>
 
 [![Download for Windows](https://img.shields.io/github/v/release/abhinaba-chanda/smart-file-organizer?label=Download%20for%20Windows&logo=windows&color=0078D4)](https://github.com/abhinaba-chanda/smart-file-organizer/releases/latest)
 [![CI](https://github.com/abhinaba-chanda/smart-file-organizer/actions/workflows/ci.yml/badge.svg)](https://github.com/abhinaba-chanda/smart-file-organizer/actions/workflows/ci.yml)

@@ -5,6 +5,7 @@ Start it with ``python -m smart_organizer.gui`` (or the ``organize-gui`` command
 
 from __future__ import annotations
 
+import os
 import queue
 import sys
 import threading
@@ -19,6 +20,14 @@ from . import gui_logic as logic
 
 PAD = 16
 CHECK_ON, CHECK_OFF = "\u2611", "\u2610"  # ballot boxes for the "include this file" column
+
+# The app icon (folder with sorted file tabs), as small PNGs for the window/taskbar icon and the title row.
+_APP_ICON = {
+    16: "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABqUlEQVR42sWTvWuTQRzHP5dcIpKYYGNbkUp1kmDHLi4OLo7iKIL/gIiDq6uTm07OxVVHRXAQBLupFAvtUhEbrbQ1ad6e5rn7fR0e+jTxBdx68IW779vB8Ts46uUAzt9tXY7o0rhQNL3ceDz38b8K5m5vvHbSld+0PYn7Bdz+X5NWePvlyfyqB9AoKcxW91i6/pRKaXRgqQGPALrpMW49v8lW78T4za+Aqx7A0n3OVb7RrH/ODQ9PXaPlT+bnC3c6zIcBCNafVdhdK5UB3I0Vzba/dj/Viv3GwnQLGZjgQ+ksJrAIUsZlmhhuF0l2/U7tTP2iHyY0y1PVxsAqLA9mMCOHR5jBMGWMzzhVaXR+hqZPeoEgNxGMMTMuNhwSvGvrzwIDCxHf60FEE+EisDgN9xYKADwYRpY3I6MUFJWDYPheAhZFjFmropgqw0zRUfXZA54uGMeTSL9rWdiyAheET9oBM8AOm79HsbQJWz8CmHixmuahQ4AF4ZNukAuTwsH+zUqKokj7NqmZsllyktd2sh6ce6/g6hhYtLxgJwr0ryFWx7ni2pF/Rn4Bu004SMsvH0MAAAAASUVORK5CYII=",
+    24: "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAACg0lEQVR42u2VP2gUQRTGf7N7d5qcYiTEhAjmkkCIQoRgIdqIlikEo40IIqZJI2pvZyVYCOK/Rgx2gtY2NgoSDQENgoXiXYgRD72YkNzlNrczz2L27ub+kZA60+y3b9983/dm3szCzthkqDI4dDM7AOFAfYJv1EYh7s1m7/bkty2QupHuMNrLAokWeWnPN2cy9/oz2xOYTKe0MulNcr8JvNoaqVpYeDTwoCLQM/k15RuVBrg6+oELRz5tSrK0nuT663PkCsmm372QgwtPh3/FACgWEd/CiaPv6Nv3ryY55+/lR6IbcWLtlDiZzzC9mKrECn881iLKkgkTALHyRwlDq6wDCDdqBG51jbPstzfaPAXDVM2IgZk7Haz/9SvtEwM4fmVobGUxjwi8bLtMUgIAjAAC2dwIItgKBIujdzEReRTrGo0TrHjs6kyO/X7GQwVwflZnlFJ9xlQTLRYHU4elabz6NPPTZxOpGEAQiO+6aCW0L2ZjS0FzIXee1sqvLFFQtP3UylUZHztg8dsVaeHcqVhLdQ+CQEDVE9aSKOBiv48Ab+ZDQu3shQExYvfDiBWqFQBBmjpv84QT3R4Thz1GOm1rTJ2O8WQuZHrRsBY4xK6IK1AMbHvUkEclD+5XDCaFXqdLe5MwtAd+xoUvSxqiXCIBMYKEjkApMBGp2GTHydwqfM4IUx/h+fhuAC69WGe5YJzcxnnGraCUD0FUtH7UOCnjnBEevw8QI+RyYWVJkLr1L89zBUzBSGMFVVwmmflu47qgGwkruVHMWrUCYV7n7VFvsWHR5MyqriUx5ePd5LJD5SsCumhui5ZrIhJHR8QIoqvuME2v5abkgpRQ3N/5n29p/Ac8aD1BQwBhqwAAAABJRU5ErkJggg==",
+    32: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADPklEQVR42u2Xz28VVRTHP3deX1tKJfAoWlqQECUEUqOCGpGQEGOCNu6MyB9gMC7cuO2CxOjKjRtNdONWwg6Vqhs1shKJaDD+CMIzoYZasKC079fc83Ux782beTPvtY+QuOlJbs6dmXPnfs/3fO+9M7Bma/Y/m2t1drw29yjOzgDjPeJrwCcuCF8uv7Pz5t0AELQ6psa0vB+X9/RoQ/L+BWu4MxPH/xy5GwAGYiqsUZTcascdKBTC77a/emmu7xnFQiEovF5+b+e1FAALLY4ZHaxx4vBnTN5zq9er9jRbbOWbJd74+gjVsNgTQ2j2PfB2CgAWomb3pb3fcmzPub6TO7QNflso8eGFJ1YS3vpMCczCOGDDwBL4MHfw+XUP8OXoFL4tn5T9/cwmHnl8MXXPDK5+M8yNX4rNKuRoAAtpaUA+BN/IneDdDYdZDoa6p7cZRjdXMrd3ba1y/UQpYsApDeDFnzT41/n5fbXbDSSYn9zPx2yMkUptf+ufXanryCt1jcgdOzY1ggSF4eK+g9MaPHXU1R3AsR91XNL7UhTYvYmVY1YXi7lXzj5f+GAAIGzYhMn1PVmUqTDrD5AZIE3EJajXwVaVXTpm+0jk/7h9B0xZQgP1elSzfql+cL1DEpcWV44364gxJQEYwvVd04NbAsBx+rJfETytSWOfABCGYH1SOH2/4+nJaNk+O+k4fcViaiWBtSZWRHeHdxJ9akCUhuDAfQHP7Qg4NNE+N956ssCRbY5PLxtnr3puLKmp9A4fg8iUIKmBfCCBxMPjAfvHHFOl7P7z0Jhj/l9HZRm+WDTMJzIWTUaU8rkaQNlACbyJ2V+N2Z/F8ADMPFXk6N5oIz15MeTNr2os1xVnkso06VuTN5dBpIF680begFQWkV+qiJnPPbs3rQNgZraC913GWYva9DOXBGDV5jmQgzwrovazUz/UwaBR8W3RZerd7Z1KAjCkaE33YqHz2YVytKtZ1XKZansy726dFlEJahjyuULptZQulqMA3+iSsZQ+e1NfRoG1GaiFV7CkUPKyUGZDqVpnVn19Dv8eA9gyt/Gja6XF3TJ7DKOQzIKmN1mKyjs3ecmdW9h678m1n5I1A/gPKLi/hRJQtqQAAAAASUVORK5CYII=",
+    48: "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAGGUlEQVR42u2ZXWwc1RXHf3dm12t71zGJk5Bgh3xAHQjiI1StIpWK8tD2AbUgeGkrIYGEVEAChJB4gAdAwANISIgHKI1akUpVVRUEFU9IhZdAJJCCFMAJoRjbCTG2YztZ7669szP3Hh5mszs7H+vxGgUe9ki7e2fuPef+/+fj3juz0JWudKUrXVmHqLibOx6Z/qUl5mciKpvSiBGRT069PPLeD05gx4On7leoVzq091+r5P1h8vXd1YtFwIowErkb0XT4uc0U+DdPSeaHi8ADX08Au9ZnVl5Tknnh+wKZFbc8/pcr51IRGL7vqwm1BgKDuRVu3vUVAz1OjHFB4susRZacXt6fGKXi9rQbNi5i3XnmtT3HgjejoRad2jMDWYd3//gKw4Pnk2OBYiw3TNHKs1mXGNJLbDTL2GJaxp2Yv5Rb//VnXG0nmbpCoZ8FfteegDFI4HJXtsTl2TLDmQoj2Qoj2TI7MmVG7BLbtp7D2rBAi0JI3i78lDcLP2+GWylsMWwyFYZ0mS1miS1eiaG+EvtvnObT8W1Uz9uIF2vuqvCNCAExGhT0Ks1/Rv7Hjbn5Jj5pfPk/osHUPZm/Fgb2R2b8kF60aXpbKdAoZlWe2Uwe1DZUzu/rvwMOqLMg4JZslhctnHM2K+ds5k/0UJzIZFYlgBgQ+FX+DPuzZxETAq4U9PYj+QJqqwNmyr9fW4DqmVD6wEx2D1ppNlq9HMhtpWw8iuJw3rgUxaGsXd9mgCAo7IJhoAADO0Gh2HEzHDu4oXd69Qj43nK1+G0Btg+jrr4O+vPQlwdLoQRwvwTviK+4Mul/gsVp9bG8ZTcowWC4ROXY07OBS6wcmXpxa4QZvczfyiebJV//Ug1SfmvTqNO3egrVi/i02we67vVqDVlcgNNTUC4jlTJUyqjCIuomk5j/s1a+kT5nzTKHlr5o1ELBzjJo5dhk5UCBZ7zGoqhCBFD+VbUUXWFiilgA4RunD9F+m7kZmJ0JERXo12CSV605q7+Z/6oBDwUUxaGIw+kLMEP90SjAyoLy2hJ4+VvZ98nhuY1K+Z5/v3AHOWVa6haRZlH3eqj8UoAULe3x7GZGve0+2ToIv6kCBgM7UlLfhel29vT/aUz2PX6NOh7ZyJ79Wnb2ZxhDyEsQpDSBtSxCQmRMmEDSuERb9c52Okao1Fasa178hZpqicCiwy1FV/IiIcPBVTMIUiTS18AQ0g+oBPTpUF/y2uhbgNdbCMw6WMaEDAuN8EubCUWi1xfqJP5+O50EJwXHKGVFaqBSwxgja56k2ZYOdOKdtJqOMc2dsUGg5moQlWJCSQ0sV/fTihcPdHRQMbEkODodyZY0CxMw9VPBqumzSjtI9PohhRE4Oh+N7O4BxT0/sThVFg6dNJx34qMZN48yMQRqbmgVSJ1KyTr7BhUCfDQTJTBZFE6VhLFFYXFZMHFzXLAvgdoMLXeRCKTJ8TTEEPj1iJ+SBz8HCdWIB/zjhGG2Io0ltRVsHPD6T1IEVEK+ra3t6957tcWVG/xt5u69ioNjEvHqtzWJgEtuN1clFR8Bg9SLOG2Oh/ssBdcNKe7aa/Gby5uP2w9fb3PVoOLQcc2xOeMfeNt4OAl4sy2rRSBd+gTTpZARHrrB5vYrbPIxL2N+u8vipmGLt056vPSxx1JNEsCRkEbNTSg2hYyO92oYaJLnig4884HL80dc7hy1eexAlr5Mcxl9/kiNN457OF4aD7chkZRC2gVDeKtPV1TBdlWEfx4zTC4a/v77HCJw/ztVPpjSqcCFbTZOvi3jVJSAq0GZzooq0gYOj7scnswg4rfTAU9ZF5iY47SraTkLdQI8BOK9/7uIAVOTtRUt7R1oYlOo2jwidpSbRPuOTnkYIxjXpACe3knxDzS6GYG1FlUSoOOnDSJgdPrUSzN34GklsApVjZ9Za8jHaIG1jqutc7VJI8GNrCJGdVZUbcGlTL21vdGtRAiI431msEUMqi041lnc6xcxWj6Lfbk78sTC0xieEMHmIoS/A9EoeW7u1e1PJr6dvuzR6c1oey/K7vM16k8b4Rca3sX9J0aElYzRJ6f/etl894+1rnSlKz8e+Q6h96jF4SrjDQAAAABJRU5ErkJggg==",
+}
 
 # The GitHub mark (from GitHub's own octicons, MIT), pre-rendered as tiny PNGs so the exe needs no image library.
 _GITHUB_MARK = {
@@ -82,8 +91,15 @@ class App:
         self._build()
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.after(50, self._drain_events)
+        self.confirm = True  # ask before moving files (the release workflow's screenshot run turns this off)
         if auto_preview:
             self.root.after(150, self.preview)
+        demo = os.environ.get("SFO_DEMO", "")  # release workflow screenshots: "organize" or "dupes"
+        if demo == "organize":
+            self.confirm = False
+            self.root.after(1800, self.organize)
+        elif demo == "dupes":
+            self.root.after(1800, self.find_dupes)
 
     # ---------- look ----------
     def _setup_window(self) -> None:
@@ -95,6 +111,11 @@ class App:
                 root.iconbitmap(default=str(icon))
             except tk.TclError:
                 pass
+        try:  # window + taskbar icon from the embedded PNGs (also works where .ico isn't supported)
+            self._window_icons = [tk.PhotoImage(master=root, data=_APP_ICON[s]) for s in (48, 32, 16)]
+            root.iconphoto(True, *self._window_icons)
+        except tk.TclError:
+            self._window_icons = []
         try:
             import sv_ttk  # Windows 11 "Sun Valley" look for ttk (tiny, pure Tcl)
 
@@ -127,6 +148,14 @@ class App:
         except tk.TclError:
             return None
 
+    def _app_icon_image(self) -> Optional[tk.PhotoImage]:
+        want = 24 * self.scale
+        px = min((24, 32, 48), key=lambda s: abs(s - want))
+        try:
+            return tk.PhotoImage(master=self.root, data=_APP_ICON[px])
+        except tk.TclError:
+            return None
+
     def _build(self) -> None:
         outer = ttk.Frame(self.root, padding=(PAD, PAD - 2, PAD, 6))
         outer.pack(fill="both", expand=True)
@@ -136,6 +165,10 @@ class App:
         head.pack(fill="x")
         titles = ttk.Frame(head)
         titles.pack(side="left")
+        self.logo_img = self._app_icon_image()
+        if self.logo_img is not None:
+            self.logo = ttk.Label(titles, image=self.logo_img)
+            self.logo.pack(side="left", anchor="center", padx=(0, 8))
         ttk.Label(titles, text=logic.APP_TITLE, style="Title.TLabel").pack(side="left", anchor="s")
         # line the small text up on the title's baseline (both labels sit on the frame's bottom edge)
         lift = max(0, tkfont.Font(root=self.root, font=self.title_font).metrics("descent")
@@ -391,7 +424,7 @@ class App:
                         "Nothing is deleted, and Undo puts them back.")
         else:
             question = f"Move {files} into folders?\nYou can put everything back with Undo."
-        if not messagebox.askyesno(logic.APP_TITLE, question, parent=self.root):
+        if self.confirm and not messagebox.askyesno(logic.APP_TITLE, question, parent=self.root):
             return
         self.progress.configure(maximum=n, value=0)
         self.progress.pack(side="top", fill="x", pady=(0, 6))
@@ -461,6 +494,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             root.update()
             if app.github_url != logic.GITHUB_URL or app.byline.cget("text") != logic.BYLINE:
                 raise RuntimeError("title row is missing the byline or the GitHub link")
+            if app.logo_img is None or not app._window_icons:
+                raise RuntimeError("app icon missing from the title row or the window")
             root.destroy()
             lines = report.lines + ["window ok"]
             code = 0 if report.ok else 1

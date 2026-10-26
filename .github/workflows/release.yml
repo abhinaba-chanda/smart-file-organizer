@@ -100,10 +100,11 @@ jobs:
           $win.Refresh()
           Write-Host "Window title: '$($win.MainWindowTitle)', alive: $(-not $win.HasExited)"
           if ($win.HasExited -or $win.MainWindowTitle -ne "Smart File Organizer") { throw "window not alive or wrong title" }
-          # 4) screenshot of the window for the README
-          try {
-            Add-Type -AssemblyName System.Drawing
-            Add-Type @"
+          Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 1
+          # 4) screenshots of the real window for the README and the portfolio (fresh demo folder each time)
+          Add-Type -AssemblyName System.Drawing
+          Add-Type @"
           using System; using System.Runtime.InteropServices;
           public struct RECT { public int Left, Top, Right, Bottom; }
           public static class W {
@@ -111,19 +112,45 @@ jobs:
             [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int a, out RECT r, int s);
           }
           "@
-            [W]::SetForegroundWindow($win.MainWindowHandle) | Out-Null
-            Start-Sleep -Milliseconds 800
-            $r = New-Object RECT
-            [W]::DwmGetWindowAttribute($win.MainWindowHandle, 9, [ref]$r, 16) | Out-Null
-            $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
-            $bmp = New-Object Drawing.Bitmap $w, $h
-            $g = [Drawing.Graphics]::FromImage($bmp)
-            $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
-            New-Item -ItemType Directory -Force shots | Out-Null
-            $bmp.Save("shots\gui-windows.png", [Drawing.Imaging.ImageFormat]::Png)
-            Write-Host "Screenshot $w x $h saved"
-          } catch { Write-Host "Screenshot skipped: $_" }
-          Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Stop-Process -Force
+          New-Item -ItemType Directory -Force shots | Out-Null
+          $env:SFO_SETTINGS_DIR = Join-Path $env:RUNNER_TEMP "sfo-settings"
+          $shots = @(
+            @{ name = "app-dark";  theme = "dark";  demo = "";         wait = 3500 },
+            @{ name = "app-done";  theme = "dark";  demo = "organize"; wait = 4200 },
+            @{ name = "app-dupes"; theme = "dark";  demo = "dupes";    wait = 4200 },
+            @{ name = "app-light"; theme = "light"; demo = "";         wait = 3500 }
+          )
+          foreach ($s in $shots) {
+            try {
+              $d = Join-Path $env:RUNNER_TEMP "Downloads"
+              Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue
+              python examples/make_messy_folder.py $d | Out-Null
+              $env:SFO_THEME = $s.theme; $env:SFO_DEMO = $s.demo
+              Start-Process $exe -ArgumentList "`"$d`""
+              $win = $null
+              for ($i = 0; $i -lt 30 -and -not $win; $i++) {
+                Start-Sleep -Milliseconds 500
+                $win = Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+              }
+              if (-not $win) { throw "no window" }
+              [W]::SetForegroundWindow($win.MainWindowHandle) | Out-Null
+              Start-Sleep -Milliseconds $s.wait
+              [W]::SetForegroundWindow($win.MainWindowHandle) | Out-Null
+              Start-Sleep -Milliseconds 300
+              $r = New-Object RECT
+              [W]::DwmGetWindowAttribute($win.MainWindowHandle, 9, [ref]$r, 16) | Out-Null
+              $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
+              $bmp = New-Object Drawing.Bitmap $w, $h
+              $g = [Drawing.Graphics]::FromImage($bmp)
+              $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
+              $bmp.Save("shots\$($s.name).png", [Drawing.Imaging.ImageFormat]::Png)
+              Write-Host "Screenshot $($s.name): $w x $h"
+            } catch { Write-Host "Screenshot $($s.name) skipped: $_" }
+            Get-Process SmartFileOrganizer -ErrorAction SilentlyContinue | Stop-Process -Force
+            Start-Sleep -Seconds 1
+          }
+          Remove-Item Env:SFO_THEME, Env:SFO_DEMO -ErrorAction SilentlyContinue
+          if (Test-Path shots\app-dark.png) { Copy-Item shots\app-dark.png shots\gui-windows.png }
           # 5) file info (Right-click > Properties > Details)
           $vi = (Get-Item $exe).VersionInfo
           Write-Host ("Details: CompanyName={0} | ProductVersion={1} | Copyright={2}" -f $vi.CompanyName, $vi.ProductVersion, $vi.LegalCopyright)

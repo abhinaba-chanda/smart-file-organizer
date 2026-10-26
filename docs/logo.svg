@@ -6,7 +6,7 @@
 <linearGradient id="f2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD95A"/><stop offset="1" stop-color="#FFB020"/></linearGradient>
 <linearGradient id="f3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5EF0C0"/><stop offset="1" stop-color="#16C08E"/></linearGradient>
 <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#06204F" flood-opacity=".35"/></filter>
-</defs>
+<linearGradient id="ink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A5FD6"/><stop offset="1" stop-color="#0B3E9E"/></linearGradient><filter id="bs" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#06204F" flood-opacity=".30"/></filter></defs>
 <g filter="url(#sh)">
 <path d="M22 54 Q22 40 36 40 H92 Q101 40 107 47 L117 58 H220 Q234 58 234 72 V200 H22 Z" fill="url(#back)"/>
 <g transform="rotate(-7 80 120)"><rect x="40" y="70" width="104" height="120" rx="10" fill="url(#f1)"/><rect x="54" y="84" width="40" height="7" rx="3.5" fill="#fff" opacity=".7"/></g>
@@ -14,6 +14,4 @@
 <g transform="rotate(7 176 120)"><rect x="124" y="72" width="104" height="120" rx="10" fill="url(#f3)"/><rect x="138" y="86" width="40" height="7" rx="3.5" fill="#fff" opacity=".75"/></g>
 <path d="M14 116 Q14 104 27 104 H229 Q242 104 242 116 V204 Q242 220 226 220 H30 Q14 220 14 204 Z" fill="url(#front)"/>
 <path d="M27 104 H229 Q242 104 242 116 V122 H14 V116 Q14 104 27 104 Z" fill="url(#sheen)"/>
-<path d="M128 130 C131.5 152 136 157 157 162 C136 167 131.5 172 128 194 C124.5 172 120 167 99 162 C120 157 124.5 152 128 130 Z" fill="#fff"/>
-<path d="M170 128 C171.2 135 172.6 136.4 179 138 C172.6 139.6 171.2 141 170 148 C168.8 141 167.4 139.6 161 138 C167.4 136.4 168.8 135 170 128 Z" fill="#fff" opacity=".85"/>
-</g></svg>
+<rect x="72.0" y="131.0" width="112" height="64" rx="20" fill="#fff" filter="url(#bs)"/><path d="M90.26 182.00 L103.56 144.00 L114.96 144.00 L128.26 182.00 L118.34 182.00 L115.91 174.61 L102.61 174.61 L100.19 182.00 Z M105.15 166.69 L113.38 166.69 L109.26 153.71 Z M133.01 144.00 L146.74 144.00 A19.00 19.00 0 0 1 146.74 182.00 L133.01 182.00 Z M142.72 152.66 L146.74 152.66 A10.34 10.34 0 0 1 146.74 173.34 L142.72 173.34 Z" fill="url(#ink)" fill-rule="evenodd"/><path d="M188 122 C189.1 128.4 190.4 129.7 196.4 131 C190.4 132.3 189.1 133.6 188 140 C186.9 133.6 185.6 132.3 179.6 131 C185.6 129.7 186.9 128.4 188 122 Z" fill="#fff"/></g></svg>

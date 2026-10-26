@@ -41,6 +41,7 @@ jobs:
           pyinstaller --noconfirm --clean --onefile --console
           --name SmartFileOrganizer
           --icon packaging/icon.ico
+          --version-file packaging/version_info.txt
           --paths src
           --collect-data smart_organizer
           --collect-submodules rich
@@ -61,6 +62,11 @@ jobs:
           if (Test-Path (Join-Path $demo "song.mp3")) { throw "run did not move song.mp3" }
           & $exe undo $demo; if ($LASTEXITCODE -ne 0) { throw "undo failed" }
           if (-not (Test-Path (Join-Path $demo "song.mp3"))) { throw "undo did not restore song.mp3" }
+          $vi = (Get-Item $exe).VersionInfo
+          Write-Host ("Details: CompanyName={0} | ProductVersion={1} | Copyright={2}" -f $vi.CompanyName, $vi.ProductVersion, $vi.LegalCopyright)
+          if ($vi.CompanyName -ne "Abhinaba-Dev") { throw "CompanyName missing from file info" }
+          if ($vi.ProductVersion -ne "V1") { throw "ProductVersion is not V1" }
+          if ($vi.LegalCopyright -notlike "*https://github.com/abhinaba-chanda*") { throw "GitHub link missing from file info" }
           Write-Host "Smoke test passed"
 
       - name: Package zip, checksums and release notes

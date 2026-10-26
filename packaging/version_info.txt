@@ -22,11 +22,10 @@ VSVersionInfo(
             StringStruct('FileDescription', 'Smart File Organizer'),
             StringStruct('FileVersion', 'V1'),
             StringStruct('InternalName', 'SmartFileOrganizer.exe'),
-            StringStruct('LegalCopyright', '\u00a9 2026 Abhinaba-Dev - https://github.com/abhinaba-chanda'),
+            StringStruct('LegalCopyright', '\u00a9 2026 Abhinaba-Dev'),
             StringStruct('OriginalFilename', 'SmartFileOrganizer.exe'),
             StringStruct('ProductName', 'Smart File Organizer'),
-            StringStruct('ProductVersion', 'V1'),
-            StringStruct('Comments', 'https://github.com/abhinaba-chanda')
+            StringStruct('ProductVersion', 'V1')
           ]
         )
       ]

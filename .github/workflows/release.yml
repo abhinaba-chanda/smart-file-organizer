@@ -66,7 +66,9 @@ jobs:
           Write-Host ("Details: CompanyName={0} | ProductVersion={1} | Copyright={2}" -f $vi.CompanyName, $vi.ProductVersion, $vi.LegalCopyright)
           if ($vi.CompanyName -ne "Abhinaba-Dev") { throw "CompanyName missing from file info" }
           if ($vi.ProductVersion -ne "V1") { throw "ProductVersion is not V1" }
-          if ($vi.LegalCopyright -notlike "*https://github.com/abhinaba-chanda*") { throw "GitHub link missing from file info" }
+          if ($vi.LegalCopyright -ne "$([char]0x00A9) 2026 Abhinaba-Dev") { throw "LegalCopyright is not the expected value" }
+          $allInfo = ($vi | Format-List * | Out-String)
+          if ($allInfo -match "github\.com") { throw "github.com found in file info" }
           Write-Host "Smoke test passed"
 
       - name: Package zip, checksums and release notes

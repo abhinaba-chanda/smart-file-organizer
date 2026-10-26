@@ -3,7 +3,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION_FILE = ROOT / "packaging" / "version_info.txt"
-GITHUB = "https://github.com/abhinaba-chanda"
 
 
 def _strings():
@@ -16,12 +15,14 @@ def _strings():
     return {literal_eval(k): literal_eval(v) for k, v in pairs}
 
 
-def test_version_file_names_publisher_and_github_link():
+def test_version_file_names_publisher_without_links():
     s = _strings()
     assert s["CompanyName"] == "Abhinaba-Dev"
-    assert GITHUB in s["LegalCopyright"]
-    assert "Abhinaba-Dev" in s["LegalCopyright"]
-    assert s["Comments"] == GITHUB
+    assert s["LegalCopyright"] == "\u00a9 2026 Abhinaba-Dev"
+    assert "Comments" not in s
+    for key, value in s.items():
+        assert "github.com" not in value.lower(), key
+    assert "github.com" not in VERSION_FILE.read_text(encoding="utf-8").lower()
     assert s["ProductVersion"] == "V1"
     assert s["FileVersion"] == "V1"
     assert s["ProductName"] == "Smart File Organizer"

@@ -78,7 +78,7 @@ jobs:
           $exeHash = (Get-FileHash out\SmartFileOrganizer.exe -Algorithm SHA256).Hash.ToLower()
           $exeSize = "{0:N1} MB" -f ((Get-Item out\SmartFileOrganizer.exe).Length / 1MB)
           $notes = Get-Content -Raw packaging\RELEASE_NOTES.md
-          $notes = $notes.Replace("{{TAG}}", $env:TAG).Replace("{{SHA256}}", $exeHash).Replace("{{SIZE}}", $exeSize)
+          $notes = $notes.Replace("{{TAG}}", $env:TAG).Replace("{{SHA256}}", $exeHash).Replace("{{SIZE}}", $exeSize).Replace("{{RUN_URL}}", "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID")
           $notes | Set-Content -Encoding utf8 out\notes.md
           Get-Content out\SHA256SUMS.txt
 

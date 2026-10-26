@@ -18,7 +18,7 @@ SmartFileOrganizer.exe --help
 
 ## Windows SmartScreen
 
-The exe is not code-signed, so Windows may show "Windows protected your PC". Click **More info** and then **Run anyway**. It is built from this repository's source by GitHub Actions (see the workflow run linked to this release), and you can compare the checksum below.
+The exe is not code-signed, so Windows may show "Windows protected your PC". Click **More info** and then **Run anyway**. It is built from this repository's source by GitHub Actions ([build log]({{RUN_URL}})), and you can compare the checksum below.
 
 ## Checksum
 

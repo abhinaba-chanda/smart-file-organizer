@@ -6,7 +6,9 @@ the same core modules the ``organize`` command uses.
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,10 +18,13 @@ from . import __version__
 from .config import MODES, ConfigError, find_config, load_config
 from .duplicates import find_duplicates
 from .executor import RunResult, apply_plan, list_logs, undo
-from .planner import Move, build_plan, human_size, iter_files
+from .planner import Move, build_plan, human_size, iter_files, unique_destination
 
 APP_TITLE = "Smart File Organizer"
-FOOTER = f"{__version__} \u00b7 Abhinaba-Dev"
+AUTHOR = "Abhinaba-Dev"
+BYLINE = f"by {AUTHOR}"
+GITHUB_URL = "https://github.com/abhinaba-chanda"
+FOOTER = f"{__version__} \u00b7 {AUTHOR}"
 MODE_LABELS = {"type": "By type", "date": "By date", "type-date": "Type + date"}
 assert set(MODE_LABELS) == set(MODES)
 
@@ -47,11 +52,71 @@ def config_for(folder: Path):
     return load_config(find_config(Path(folder)))
 
 
-def make_plan(folder: Path, mode: str):
-    """``build_plan`` with the folder's own rules."""
+def make_plan(folder: Path, mode: str, recursive: bool = False):
+    """``build_plan`` with the folder's own rules (``recursive`` also picks up files in subfolders)."""
     if mode not in MODES:
         raise ValueError(f"Unknown mode {mode!r}")
-    return build_plan(Path(folder), config_for(folder), mode=mode)
+    return build_plan(Path(folder), config_for(folder), mode=mode, recursive=recursive)
+
+
+def included(moves: list[Move], skipped: Iterable[int]) -> list[Move]:
+    """The moves still ticked in the preview (``skipped`` holds the row numbers the user unticked)."""
+    skip = set(skipped)
+    return [m for i, m in enumerate(moves) if i not in skip]
+
+
+# ---------- remembered settings (last folder, grouping, subfolders) ----------
+
+def settings_path() -> Path:
+    """``%APPDATA%\\SmartFileOrganizer\\settings.json`` on Windows (``SFO_SETTINGS_DIR`` overrides)."""
+    base = os.environ.get("SFO_SETTINGS_DIR")
+    if base:
+        return Path(base) / "settings.json"
+    if sys.platform == "win32" and os.environ.get("APPDATA"):
+        return Path(os.environ["APPDATA"]) / "SmartFileOrganizer" / "settings.json"
+    return Path.home() / ".config" / "smart-file-organizer" / "settings.json"
+
+
+def load_settings() -> dict:
+    """Last folder, mode and subfolder choice; anything missing or broken falls back to the defaults."""
+    out = {"folder": str(default_folder()), "mode": "type", "recursive": False}
+    try:
+        data = json.loads(settings_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    if not isinstance(data, dict):
+        return out
+    folder = data.get("folder")
+    if isinstance(folder, str) and Path(folder).is_dir():
+        out["folder"] = folder
+    if data.get("mode") in MODES:
+        out["mode"] = data["mode"]
+    if isinstance(data.get("recursive"), bool):
+        out["recursive"] = data["recursive"]
+    return out
+
+
+def save_settings(folder: str, mode: str, recursive: bool) -> bool:
+    """Remember the choices for next time. Never raises (returns False if it couldn't save)."""
+    path = settings_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"folder": str(folder), "mode": mode, "recursive": bool(recursive)},
+                                   indent=2), encoding="utf-8")
+        return True
+    except OSError:
+        return False
+
+
+def open_in_explorer(folder: Path) -> None:
+    """Open a folder in Explorer (Finder / the file manager elsewhere)."""
+    folder = str(Path(folder))
+    if sys.platform == "win32":
+        os.startfile(folder)  # type: ignore[attr-defined]
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", folder])
+    else:
+        subprocess.Popen(["xdg-open", folder])
 
 
 def destination_label(move: Move, root: Path) -> str:
@@ -107,16 +172,38 @@ def undo_last(folder: Path) -> RunResult:
     return undo(Path(folder))
 
 
-def duplicate_rows(folder: Path) -> tuple[list[tuple[str, str]], str]:
+def duplicate_moves(folder: Path, recursive: bool = False) -> list[Move]:
+    """Moves that put every extra copy of an identical file into the Duplicates folder (keeps the first)."""
+    folder = Path(folder).resolve()
+    cfg = config_for(folder)
+    target_dir = folder.joinpath(*[p for p in cfg.duplicates_folder.replace("\\", "/").split("/") if p])
+    taken: set[str] = set()
+    moves: list[Move] = []
+    for group in find_duplicates(list(iter_files(folder, cfg, recursive))):
+        for extra in group[1:]:
+            dst = unique_destination(target_dir / extra.name, taken)
+            taken.add(os.path.normcase(os.path.abspath(dst)))
+            moves.append(Move(src=extra, dst=dst, category="Duplicate", size=extra.stat().st_size,
+                              duplicate_of=group[0]))
+    return moves
+
+
+def duplicate_summary(moves: list[Move]) -> str:
+    if not moves:
+        return "No duplicates found."
+    copies = "copy" if len(moves) == 1 else "copies"
+    return f"{len(moves)} extra {copies} \u00b7 {human_size(sum(m.size for m in moves))} wasted"
+
+
+def duplicate_view(moves: list[Move]) -> list[tuple[str, str]]:
+    """``(extra copy, copy of)`` rows for the duplicates view."""
+    return [(m.src.name, f"copy of {m.duplicate_of.name}" if m.duplicate_of else "") for m in moves]
+
+
+def duplicate_rows(folder: Path, recursive: bool = False) -> tuple[list[tuple[str, str]], str]:
     """Rows ``(extra copy, copy of)`` and a summary line for the duplicates view."""
-    folder = Path(folder)
-    groups = find_duplicates(list(iter_files(folder, config_for(folder))))
-    rows = [(extra.name, f"copy of {group[0].name}") for group in groups for extra in group[1:]]
-    if not rows:
-        return rows, "No duplicates found."
-    wasted = sum(g[0].stat().st_size * (len(g) - 1) for g in groups)
-    copies = "copy" if len(rows) == 1 else "copies"
-    return rows, f"{len(rows)} extra {copies} \u00b7 {human_size(wasted)} wasted"
+    moves = duplicate_moves(folder, recursive)
+    return duplicate_view(moves), duplicate_summary(moves)
 
 
 def friendly_error(exc: BaseException) -> str:
@@ -190,5 +277,11 @@ def self_test(workdir: Path) -> SelfTestReport:
     back = undo_last(workdir)
     lines.append(run_summary(back, "Put back"))
     ok = ok and (workdir / "song.mp3").exists() and len(dup_rows) == 1
+    dup_moves = duplicate_moves(workdir)
+    moved = organize(dup_moves, workdir)
+    lines.append(run_summary(moved, "Moved") + " to Duplicates")
+    ok = ok and len(dup_moves) == 1 and (workdir / "Duplicates").is_dir()
+    lines.append(run_summary(undo_last(workdir), "Put back"))
+    ok = ok and not (workdir / "Duplicates").exists() and len(included(dup_moves, [0])) == 0
     lines.append("ok" if ok else "FAILED")
     return SelfTestReport(ok, lines)

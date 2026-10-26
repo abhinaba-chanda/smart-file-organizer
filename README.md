@@ -18,7 +18,7 @@
 - **Rules from YAML** – match by extension, file-name pattern (`Screenshot*`) or size (`min_size: 1GB`); first matching rule wins.
 - **Three layouts** – `type` (`Images/…`), `date` (`2026/10/…`) or `type-date` (`Images/2026/10/…`).
 - **Safe by design** – never overwrites (name clashes become `photo (1).jpg`), skips hidden files and half-finished downloads (`*.crdownload`, `*.part`), and asks before moving.
-- **Simple desktop app** for Windows: pick a folder, preview, organize, undo. Light and dark mode, one small exe.
+- **Simple desktop app** for Windows: pick a folder, preview (untick files to skip them), organize, undo, move duplicates aside. Remembers your last folder, light and dark mode, one small exe.
 - **Colourful terminal UI** made with [rich](https://github.com/Textualize/rich): tables, a tree view and a progress bar.
 - **Cross-platform** – uses `pathlib` throughout, stores portable paths in the undo log, and the CI runs on **Windows, macOS and Linux** with Python 3.9 and 3.12.
 
@@ -30,11 +30,14 @@ No Python needed: grab **[SmartFileOrganizer.exe from release V1](https://github
 
 ![Smart File Organizer app on Windows 11](docs/app-windows.jpg)
 
-1. **Choose a folder** (it starts on your Downloads folder; *Browse…* picks another, or drop a folder onto the exe's icon).
-2. **Pick how to group**: *By type*, *By date* or *Type + date*.
-3. **Check the preview**: every file and the folder it will go to, with a count.
-4. **Organize**: a progress bar runs, then a "done" toast. Changed your mind? **Undo last run** puts everything back.
-5. **Find duplicates** lists extra copies of identical files and the space they waste.
+1. **Choose a folder** (it starts on your Downloads folder, or the folder you used last time; *Browse…* picks another, or drop a folder onto the exe's icon).
+2. **Pick how to group**: *By type*, *By date* or *Type + date*. Tick **Subfolders** to include files inside subfolders too.
+3. **Check the preview**: every file and the folder it will go to, with a count. Untick a file (click its box, or double-click the row) to leave it where it is.
+4. **Organize**: a progress bar runs, then a "done" toast with an **Open folder** link. Changed your mind? **Undo last run** puts everything back.
+5. **Find duplicates** lists extra copies of identical files and the space they waste; **Move extras to Duplicates** puts them in a `Duplicates` folder (nothing is deleted, and Undo puts them back).
+6. The **GitHub** button at the top opens [my GitHub profile](https://github.com/abhinaba-chanda).
+
+The app remembers your last folder, grouping and Subfolders choice (in `%APPDATA%\SmartFileOrganizer\settings.json`).
 
 It follows the Windows light/dark setting. The exe is one small file built from this source by GitHub Actions ([release workflow](.github/workflows/release.yml), [spec](packaging/SmartFileOrganizer.spec)). It is not code-signed, so Windows SmartScreen may warn you: click **More info → Run anyway**. Each release lists the exe's SHA-256 checksum.
 

@@ -6,9 +6,9 @@ Tidy a messy folder (like Downloads) by file type and/or date, in a simple app w
 
 1. Download **SmartFileOrganizer.exe** below ({{SIZE}}, or the zip, which also has the README). No Python or installer needed.
 2. **Double-click it.** A small window opens (no cmd window), starting on your Downloads folder.
-3. Pick how to group (by type, by date, or type + date), check the preview, then click **Organize**. **Undo last run** puts everything back; **Find duplicates** lists extra copies.
+3. Pick how to group (by type, by date, or type + date; tick **Subfolders** to go deeper), check the preview (untick any file to skip it), then click **Organize** and use **Open folder** in the done message. **Undo last run** puts everything back; **Find duplicates** lists extra copies and can move them into a Duplicates folder (nothing is deleted).
 
-It follows your Windows light/dark setting.
+It follows your Windows light/dark setting and remembers your last folder and choices. The **GitHub** button at the top links to the author's profile.
 
 ## Windows SmartScreen
 

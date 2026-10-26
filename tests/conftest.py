@@ -5,6 +5,12 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _own_settings_dir(tmp_path_factory, monkeypatch):
+    """Keep the window's remembered settings out of the real user profile during tests."""
+    monkeypatch.setenv("SFO_SETTINGS_DIR", str(tmp_path_factory.mktemp("settings")))
+
+
 @pytest.fixture
 def messy(tmp_path: Path) -> Path:
     """A small messy folder with known modification times."""
